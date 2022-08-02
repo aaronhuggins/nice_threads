@@ -4,7 +4,7 @@ A promise wrapper for JavaScript Workers, batteries included for Deno and Node.
 
 ## Usage
 
-Import using Deno, Node CJS, or Node ESM.
+Import using Deno, Node CJS `require`, or Node ESM `import`.
 
 Then, you can start individual threads and manage them yourself:
 
