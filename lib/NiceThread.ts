@@ -15,7 +15,7 @@ export class NiceThread<T = unknown, I = any> {
 		) => void,
 	) {
 		const script = 'const executor = ' + executor.toString() + '\n' +
-		  'addEventListener("message", function (event) {\n' +
+			'addEventListener("message", function (event) {\n' +
 			'  const workerData = event.data\n' +
 			'  new Promise(executor.bind({ workerData }))\n' +
 			'    .then(\n' +
