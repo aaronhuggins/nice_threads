@@ -2,7 +2,7 @@
 import { isNiceThreadError } from './error.ts';
 import { makeUrl } from './url.ts';
 
-export class NiceThreadPool<T extends NiceAsync> extends Array<Promised<T>> {
+export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<ReturnType<T>>>> {
 	#last = 0;
 	#poolSize = 2;
 	#pool: Worker[] = [];
@@ -85,17 +85,17 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promised<T>> {
 		return promise;
 	}
 
-	all(): Array<Promised<T>>;
-	all(calls: Parameters<T>[]): Array<Promised<T>>;
-	all(calls?: Parameters<T>[]) {
+	all(): Promise<Awaited<ReturnType<T>>[]>;
+	all(calls: Parameters<T>[]): Promise<Awaited<ReturnType<T>>[]>;
+	all(calls?: Parameters<T>[]): Promise<Awaited<ReturnType<T>>[]> {
 		if (Array.isArray(calls)) return Promise.all(calls.map((args) => this.call(...args)));
 
 		return Promise.all(this) as any;
 	}
 
-	allSettled(): Promise<PromiseSettledResult<Promised<T>>>;
-	allSettled(calls: Parameters<T>[]): Promise<PromiseSettledResult<Promised<T>>>;
-	allSettled(calls?: Parameters<T>[]) {
+	allSettled(): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]>;
+	allSettled(calls: Parameters<T>[]): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]>;
+	allSettled(calls?: Parameters<T>[]): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]> {
 		if (Array.isArray(calls)) return Promise.allSettled(calls.map((args) => this.call(...args)));
 
 		return Promise.allSettled(this) as any;
@@ -116,5 +116,3 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promised<T>> {
 }
 
 export type NiceAsync<Params extends any[] = any[], Result = any> = (...args: Params) => Promise<Result>;
-
-type Promised<T extends NiceAsync> = Promise<Awaited<ReturnType<T>>>;

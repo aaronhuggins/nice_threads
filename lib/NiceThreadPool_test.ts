@@ -19,10 +19,10 @@ describe('NiceThreadPool', () => {
 			return Promise.resolve(primes);
 		});
 
-		pool.call(30);
-		pool.call(100);
-		pool.call(150);
-		pool.call(60);
+		pool.call(300);
+		pool.call(1000);
+		pool.call(1500);
+		pool.call(600);
 
 		const result = await pool.all();
 
@@ -35,5 +35,9 @@ describe('NiceThreadPool', () => {
 
 		assertEquals(pool.length, 0);
 		assertEquals(result.length, 4);
+		assertEquals(result[0][1], 3)
+		assertEquals(result[1][1], 3)
+		assertEquals(result[2][1], 3)
+		assertEquals(result[3][1], 3)
 	});
 });
