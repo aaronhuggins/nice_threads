@@ -2,15 +2,22 @@
 import { isNiceThreadError } from './error.ts';
 import { makeUrl } from './url.ts';
 
-export class NiceThread<T> {
+export class NiceThread<T = unknown, I = any> {
 	#persist = false;
 	#worker: Worker;
 	#promise: Promise<T>;
 
-	constructor(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void) {
-		const script = 'addEventListener("message",function (event) {\n' +
+	constructor(
+		executor: (
+			this: { workerData: I },
+			resolve: (value: T | PromiseLike<T>) => void,
+			reject: (reason?: any) => void,
+		) => void,
+	) {
+		const script = 'const executor = ' + executor.toString() + '\n' +
+		  'addEventListener("message", function (event) {\n' +
 			'  const workerData = event.data\n' +
-			'  new Promise(' + executor.toString() + ')\n' +
+			'  new Promise(executor.bind({ workerData }))\n' +
 			'    .then(\n' +
 			'      function (result) {\n' +
 			'        postMessage(result)\n' +
@@ -62,7 +69,7 @@ export class NiceThread<T> {
 		this.#persist = value;
 	}
 
-	putWork(workerData: any) {
+	putWork(workerData: I) {
 		this.#worker.postMessage(workerData);
 		return this;
 	}

@@ -6,8 +6,8 @@ declare const workerData: number;
 
 describe('NiceThread', () => {
 	it('should create thread and run as promise', async () => {
-		const result = await new NiceThread<number[]>((resolve) => {
-			const max = workerData;
+		const result = await new NiceThread<number[], number>(function (resolve) {
+			const max = this.workerData;
 			const sieve = [];
 			const primes = [];
 			for (let i = 2; i <= max; ++i) {
