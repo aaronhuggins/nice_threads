@@ -64,45 +64,35 @@ await build({
 					exportName: 'default',
 				}],
 			},
-			{
-				package: {
-					name: 'btoa',
-					version: '^1.2.1',
-				},
-				globalNames: [{
-					name: 'btoa',
-					exportName: 'default',
-				}],
-			},
 		],
 	},
 	package: {
 		name: 'nice-threads',
 		version: newVersion,
-		description: 'Blah blah blah',
+		description: 'A promise wrapper for JavaScript Workers, batteries',
 		keywords: ['worker', 'promise', 'multithread'],
-		/* homepage: "https://github.com/aaronhuggins/cbor-redux#readme",
-    bugs: "https://github.com/aaronhuggins/cbor-redux/issues", */
+		homepage: 'https://github.com/aaronhuggins/nice-threads#readme',
+		bugs: 'https://github.com/aaronhuggins/nice-threads/issues',
 		license: 'MIT',
 		contributors: [
 			'Aaron Huggins <ahuggins@aaronhuggins.com> (https://aaronhuggins.com/)',
 		],
-		/* repository: {
-      type: "git",
-      url: "https://github.com/aaronhuggins/cbor-redux.git",
-    },*/
+		repository: {
+			type: 'git',
+			url: 'https://github.com/aaronhuggins/nice-threads.git',
+		},
 	},
 });
 
 // post build steps
-/*await Deno.copyFile("LICENSE.md", "npm/LICENSE.md");
-await Deno.copyFile("README.md", "npm/README.md");*/
+await Deno.copyFile('LICENSE.md', 'npm/LICENSE.md');
+await Deno.copyFile('README.md', 'npm/README.md');
 
 if (newVersion === version) {
 	console.log(
-		`[build_npm] Version did not change; nothing to deploy. cbor-redux v${version}`,
+		`[build_npm] Version did not change; nothing to deploy. nice-threads v${version}`,
 	);
 } else {
 	await Deno.writeTextFile(versionFile, newVersion);
-	console.log(`[build_npm] cbor-redux v${newVersion} ready to deploy!`);
+	console.log(`[build_npm] nice-threads v${newVersion} ready to deploy!`);
 }
