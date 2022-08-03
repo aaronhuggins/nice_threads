@@ -66,6 +66,12 @@ await build({
 			},
 		],
 	},
+	postBuild: async () => {
+		// await Deno.mkdir('./npm/esm/lib', { recursive: true })
+		// await Deno.mkdir('./npm/script/lib', { recursive: true })
+		await Deno.copyFile('./xplat/url.mjs', './npm/esm/lib/url.js');
+		await Deno.copyFile('./xplat/url.cjs', './npm/script/lib/url.js');
+	},
 	package: {
 		name: 'nice-threads',
 		version: newVersion,
