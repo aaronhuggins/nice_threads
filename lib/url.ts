@@ -11,10 +11,18 @@ function internalBtoa(input: string): string {
 	return buffer.toString('base64');
 }
 
+function normalizeNodeModule(script: string): string {
+	const importStarMatch = /await Promise\.resolve\(\)\.then\(\(\) => __importStar\(require\((.+)\)\)\)/gu;
+	const requireMatch = /require\((.+)\)/gu;
+	const trueImport = 'await import($1)';
+
+	return script.replaceAll(importStarMatch, trueImport).replaceAll(requireMatch, trueImport);
+}
+
 export function makeUrl(script: string): string {
 	const mimetype = 'text/javascript';
 	if (typeof process === 'object' && typeof process?.versions?.node === 'string') {
-		return `data:${mimetype};base64,${internalBtoa(script)}`;
+		return `data:${mimetype};base64,${internalBtoa(normalizeNodeModule(script))}`;
 	} else {
 		return URL.createObjectURL(new Blob([script], { type: mimetype }));
 	}

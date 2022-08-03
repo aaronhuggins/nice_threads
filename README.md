@@ -6,6 +6,8 @@ A promise wrapper for JavaScript Workers, batteries included for Deno and Node.
 
 Import using Deno, Node CJS `require`, or Node ESM `import`.
 
+All executors and workers are of type `module`; use `await import` to dynamically import other modules at runtime.
+
 Then, you can start individual threads and manage them yourself:
 
 ```TypeScript
