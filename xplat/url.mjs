@@ -13,6 +13,8 @@ function internalBtoa(input) {
 function normalizeNodeModule(script) {
 	const importMatch = /import\((.+)\)/gu;
 	const toFileUrl = (path) => {
+		const validPackage = /^((node:){0,1}[@a-z][a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/
+		if (validPackage.test(path)) return path
 		return 'file://' + path.split(/[\\/]/gu).map(encodeURIComponent).join('/');
 	};
 	const resolver = (_matched, $1) => {
