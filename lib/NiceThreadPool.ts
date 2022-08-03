@@ -85,6 +85,12 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<R
 		return promise;
 	}
 
+	queue(calls: Parameters<T>[]) {
+		for (const args of calls) this.call(...args);
+
+		return this;
+	}
+
 	all(): Promise<Awaited<ReturnType<T>>[]>;
 	all(calls: Parameters<T>[]): Promise<Awaited<ReturnType<T>>[]>;
 	all(calls?: Parameters<T>[]): Promise<Awaited<ReturnType<T>>[]> {
