@@ -35,7 +35,7 @@ function normalizeNodeModule(script) {
 		return `import(${$1})`;
 	};
 
-	return script.replaceAll(importMatch, resolver);
+	return script.replace(importMatch, resolver);
 }
 
 export function makeUrl(script) {

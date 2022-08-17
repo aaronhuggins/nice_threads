@@ -32,7 +32,7 @@ function normalizeNodeModule(script) {
 		return `await import(${$1})`;
 	};
 
-	return script.replaceAll(importStarMatch, resolver).replaceAll(requireMatch, resolver);
+	return script.replace(importStarMatch, resolver).replace(requireMatch, resolver);
 }
 
 module.exports.makeUrl = function makeUrl(script) {
