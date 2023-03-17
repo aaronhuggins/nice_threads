@@ -50,8 +50,8 @@ describe('NiceThreadPool', () => {
 			const modulePath = new URL(`./error.${isNodeJs ? 'js' : 'ts'}`, baseUrl).href;
 			const { isNiceThreadError } = await import(modulePath);
 			if (isNodeJs) {
-				await import('web-worker')
-				await import('http')
+				await import('web-worker' as string)
+				await import('node:http')
 			}
 			return isNiceThreadError(error) as boolean;
 		});
