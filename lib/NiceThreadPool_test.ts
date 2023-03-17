@@ -50,8 +50,12 @@ describe('NiceThreadPool', () => {
 			const modulePath = new URL(`./error.${isNodeJs ? 'js' : 'ts'}`, baseUrl).href;
 			const { isNiceThreadError } = await import(modulePath);
 			if (isNodeJs) {
-				await import('web-worker' as string)
-				await import('node:http')
+				await import('web-worker' as string);
+				await import('http' as string);
+			}
+			const { isNiceThreadError: secondary } = await import(modulePath);
+			if (secondary !== isNiceThreadError) {
+				throw new Error(`Secondary import of ${modulePath} did not match.`);
 			}
 			return isNiceThreadError(error) as boolean;
 		});

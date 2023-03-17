@@ -10,12 +10,12 @@ function normalizeNodeModule(script) {
 	const importStarMatch = /await Promise\.resolve\(\)\.then\(\(\) => __importStar\(require\((.+)\)\)\)/gu;
 	const requireMatch = /require\((.+)\)/gu;
 	const toFileUrl = (path) => {
-		const validPackage = /^((node:){0,1}[@a-z][a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/
-		if (validPackage.test(path)) return path
+		const validPackage = /^((node:){0,1}[@a-z][a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
+		if (validPackage.test(path)) return path;
 		return 'file://' + path.split(/[\\/]/gu).map(encodeURIComponent).join('/');
 	};
 	const resolver = (_matched, $1) => {
-		const specMatch = (/^['"](.+)['"]$/gu);
+		const specMatch = /^['"](.+)['"]$/gu;
 
 		if (specMatch.test($1)) {
 			const spec = $1.replace(specMatch, '$1');
@@ -29,10 +29,20 @@ function normalizeNodeModule(script) {
 			}
 		}
 
-		return `await import(${$1})`;
+		return `await cacheImport(${$1})`;
 	};
 
-	return script.replace(importStarMatch, resolver).replace(requireMatch, resolver);
+	const normalized = script.replace(importStarMatch, resolver).replace(requireMatch, resolver);
+
+	return 'const importCache = new Map();\n' +
+		'async function cacheImport(spec) {\n' +
+		'  if (importCache.has(spec)) {\n' +
+		'    return importCache.get(spec);\n' +
+		'  }\n' +
+		'  const result = await import(spec);\n' +
+		'  importCache.set(spec, result);\n' +
+		'  return result;\n' +
+		'};\n' + normalized;
 }
 
 module.exports.makeUrl = function makeUrl(script) {
