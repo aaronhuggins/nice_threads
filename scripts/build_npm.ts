@@ -77,15 +77,15 @@ await build({
 		version: newVersion,
 		description: 'A promise wrapper for JavaScript Workers, batteries',
 		keywords: ['worker', 'promise', 'multithread'],
-		homepage: 'https://github.com/aaronhuggins/nice-threads#readme',
-		bugs: 'https://github.com/aaronhuggins/nice-threads/issues',
+		homepage: 'https://github.com/aaronhuggins/nice_threads#readme',
+		bugs: 'https://github.com/aaronhuggins/nice_threads/issues',
 		license: 'MIT',
 		contributors: [
 			'Aaron Huggins <ahuggins@aaronhuggins.com> (https://aaronhuggins.com/)',
 		],
 		repository: {
 			type: 'git',
-			url: 'https://github.com/aaronhuggins/nice-threads.git',
+			url: 'https://github.com/aaronhuggins/nice_threads.git',
 		},
 	},
 });
