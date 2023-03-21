@@ -47,10 +47,11 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<R
 		this.#poolSize = Math.max(Math.floor(value), 1);
 	}
 
+	/** Make an arbitrary call to the thread pool. */
 	call(...args: Parameters<T>) {
 		const id = this.length;
 		const worker = this.#nextWorker();
-		const promise = new Promise<any>((resolve, reject) => {
+		const promise = new Promise<Awaited<ReturnType<T>>>((resolve, reject) => {
 			const onerror = (event: ErrorEvent) => {
 				remove();
 				reject(event.error);
@@ -87,13 +88,16 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<R
 		return promise;
 	}
 
-	queue(calls: Parameters<T>[]) {
+	/** Queue a series of calls on the thread pool */
+	queue(calls: Iterable<Parameters<T>>): this {
 		for (const args of calls) this.call(...args);
 
 		return this;
 	}
 
+	/** Resolve all calls on the thread pool. */
 	all(): Promise<Awaited<ReturnType<T>>[]>;
+	/** Resolve an array of calls on the thread pool. */
 	all(calls: Parameters<T>[]): Promise<Awaited<ReturnType<T>>[]>;
 	all(calls?: Parameters<T>[]): Promise<Awaited<ReturnType<T>>[]> {
 		if (Array.isArray(calls)) return Promise.all(calls.map((args) => this.call(...args)));
@@ -101,7 +105,9 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<R
 		return Promise.all(this) as any;
 	}
 
+	/** Settle all calls on the thread pool. */
 	allSettled(): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]>;
+	/** Settle an array of calls on the thread pool. */
 	allSettled(calls: Parameters<T>[]): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]>;
 	allSettled(calls?: Parameters<T>[]): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]> {
 		if (Array.isArray(calls)) return Promise.allSettled(calls.map((args) => this.call(...args)));
@@ -109,11 +115,14 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<R
 		return Promise.allSettled(this) as any;
 	}
 
+	/** Clear all results from the thread pool. */
 	clear() {
 		this.length = 0;
 	}
 
+	/** Terminate the thread pool. */
 	terminate(): void;
+	/** Terminate the thread pool and clear all results. */
 	terminate(clear: true): void;
 	terminate(clear = false) {
 		for (const worker of this.#pool) worker.terminate();
