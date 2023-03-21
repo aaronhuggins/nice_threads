@@ -37,12 +37,14 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<R
 		return worker;
 	}
 
+	/** An integer which determines the number of threads in the pool, no less than 1. */
 	get poolSize() {
 		return this.#poolSize;
 	}
 
+	/** An integer which determines the number of threads in the pool, no less than 1. */
 	set poolSize(value: number) {
-		this.#poolSize = value;
+		this.#poolSize = Math.max(Math.floor(value), 1);
 	}
 
 	call(...args: Parameters<T>) {
