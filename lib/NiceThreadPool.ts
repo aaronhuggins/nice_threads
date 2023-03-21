@@ -2,6 +2,10 @@
 import { isNiceThreadError } from './error.ts';
 import { makeUrl } from './url.ts';
 
+declare global {
+	const workerCache: Map<any, any>
+}
+
 export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<ReturnType<T>>>> {
 	#last = 0;
 	#poolSize = 2;
@@ -10,7 +14,8 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<R
 
 	constructor(worker: T) {
 		super();
-		const script = 'const worker = ' + worker.toString() + ';\n' +
+		const script = 'const workerCache = new Map();\n' +
+			'const worker = ' + worker.toString() + ';\n' +
 			'addEventListener("message", function (event) {\n' +
 			'  const workerData = event.data ?? { id: 0, args: [] };\n' +
 			'  const { id = 0, args = [] } = workerData\n' +
