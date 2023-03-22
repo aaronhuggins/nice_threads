@@ -1,45 +1,28 @@
 // deno-lint-ignore-file no-explicit-any
-import { isNiceThreadError } from './error.ts';
-import { makeUrl } from './url.ts';
+import { NiceThread } from './NiceThread.ts';
+import type { AwaitResult, NiceAsync } from './types.ts';
 
-declare global {
-	const workerCache: Map<any, any>
-}
-
-export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<ReturnType<T>>>> {
+/** A promise-based thread pool for easy management of threads. */
+export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<AwaitResult<T>>> {
 	#last = 0;
 	#poolSize = 2;
-	#pool: Worker[] = [];
-	#script: string;
+	#pool: NiceThread<T>[] = [];
+	#worker: T;
 
+	/** Creates an instance of thread pool with an async worker function. */
 	constructor(worker: T) {
 		super();
-		const script = 'const workerCache = new Map();\n' +
-			'const worker = ' + worker.toString() + ';\n' +
-			'addEventListener("message", function (event) {\n' +
-			'  const workerData = event.data ?? { id: 0, args: [] };\n' +
-			'  const { id = 0, args = [] } = workerData\n' +
-			'  worker(...args)\n' +
-			'    .then(\n' +
-			'      function (result) {\n' +
-			'        postMessage({ id, result })\n' +
-			'      },\n' +
-			'      function (error) {\n' +
-			'        postMessage({ id, __nice_thread_error: error })\n' +
-			'      }\n' +
-			'    )\n' +
-			'})';
-		this.#script = makeUrl(script);
+		this.#worker = worker;
 	}
 
-	#nextWorker() {
+	#nextThread() {
 		if (this.#last === this.#poolSize) this.#last = 0;
 
 		const current = this.#last++;
-		const worker = this.#pool[current] ?? new Worker(this.#script, { type: 'module' } as any);
-		this.#pool[current] = worker;
+		const thread = this.#pool[current] ?? new NiceThread(this.#worker);
+		this.#pool[current] = thread;
 
-		return worker;
+		return thread;
 	}
 
 	/** An integer which determines the number of threads in the pool, no less than 1. */
@@ -53,42 +36,10 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<R
 	}
 
 	/** Make an arbitrary call to the thread pool. */
-	call(...args: Parameters<T>) {
-		const id = this.length;
-		const worker = this.#nextWorker();
-		const promise = new Promise<Awaited<ReturnType<T>>>((resolve, reject) => {
-			const onerror = (event: ErrorEvent) => {
-				remove();
-				reject(event.error);
-			};
-			const onmessage = (event: MessageEvent) => {
-				if (event.data?.id === id) {
-					remove();
-					if (isNiceThreadError(event.data)) {
-						reject(event.data.__nice_thread_error);
-					} else {
-						resolve(event.data.result);
-					}
-				}
-			};
-			const onmessageerror = (event: MessageEvent) => {
-				remove();
-				reject(event.data);
-			};
-			const remove = () => {
-				worker.removeEventListener('error', onerror);
-				worker.removeEventListener('message', onmessage);
-				worker.removeEventListener('messageerror', onmessageerror);
-			};
-
-			worker.addEventListener('error', onerror);
-			worker.addEventListener('message', onmessage);
-			worker.addEventListener('messageerror', onmessageerror);
-		});
+	call(...args: Parameters<T>): Promise<AwaitResult<T>> {
+		const promise = this.#nextThread().call(...args);
 
 		this.push(promise);
-
-		worker.postMessage({ id, args });
 
 		return promise;
 	}
@@ -101,27 +52,27 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<R
 	}
 
 	/** Resolve all calls on the thread pool. */
-	all(): Promise<Awaited<ReturnType<T>>[]>;
+	all(): Promise<AwaitResult<T>[]>;
 	/** Resolve an array of calls on the thread pool. */
-	all(calls: Parameters<T>[]): Promise<Awaited<ReturnType<T>>[]>;
-	all(calls?: Parameters<T>[]): Promise<Awaited<ReturnType<T>>[]> {
+	all(calls: Parameters<T>[]): Promise<AwaitResult<T>[]>;
+	all(calls?: Parameters<T>[]): Promise<AwaitResult<T>[]> {
 		if (Array.isArray(calls)) return Promise.all(calls.map((args) => this.call(...args)));
 
 		return Promise.all(this) as any;
 	}
 
 	/** Settle all calls on the thread pool. */
-	allSettled(): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]>;
+	allSettled(): Promise<PromiseSettledResult<AwaitResult<T>>[]>;
 	/** Settle an array of calls on the thread pool. */
-	allSettled(calls: Parameters<T>[]): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]>;
-	allSettled(calls?: Parameters<T>[]): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]> {
+	allSettled(calls: Parameters<T>[]): Promise<PromiseSettledResult<AwaitResult<T>>[]>;
+	allSettled(calls?: Parameters<T>[]): Promise<PromiseSettledResult<AwaitResult<T>>[]> {
 		if (Array.isArray(calls)) return Promise.allSettled(calls.map((args) => this.call(...args)));
 
 		return Promise.allSettled(this) as any;
 	}
 
 	/** Clear all results from the thread pool. */
-	clear() {
+	clear(): void {
 		this.length = 0;
 	}
 
@@ -130,11 +81,13 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<R
 	/** Terminate the thread pool and clear all results. */
 	terminate(clear: true): void;
 	terminate(clear = false) {
-		for (const worker of this.#pool) worker.terminate();
+		for (const thread of this.#pool) thread.terminate();
 		this.#pool = [];
 		this.#last = 0;
 		if (clear) this.clear();
 	}
-}
 
-export type NiceAsync<Params extends any[] = any[], Result = any> = (...args: Params) => Promise<Result>;
+	get [Symbol.toStringTag](): string {
+		return 'NiceThreadPool';
+	}
+}

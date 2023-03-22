@@ -6,6 +6,20 @@ import { NiceThreadPool } from './NiceThreadPool.ts';
 declare const process: any;
 
 describe('NiceThreadPool', () => {
+	it('should set pool size to an integer', () => {
+		const pool = new NiceThreadPool(async () => {});
+
+		assertEquals(pool.poolSize, 2);
+
+		pool.poolSize = 4;
+
+		assertEquals(pool.poolSize, 4);
+
+		pool.poolSize = 3.8;
+
+		assertEquals(pool.poolSize, 3);
+	});
+
 	it('should create pool and run work on threads', async () => {
 		const pool = new NiceThreadPool((max: number) => {
 			const sieve = [];
@@ -42,6 +56,39 @@ describe('NiceThreadPool', () => {
 		assertEquals(result[1][1], 3);
 		assertEquals(result[2][1], 3);
 		assertEquals(result[3][1], 3);
+
+		await pool.all([
+			[300],
+			[1000],
+			[1500],
+			[600],
+		]);
+
+		assertEquals(pool.length, 4);
+
+		pool.terminate(true);
+
+		pool.call(300);
+		pool.call(1000);
+		pool.call(1500);
+		pool.call(600);
+
+		await pool.allSettled();
+
+		assertEquals(pool.length, 4);
+
+		pool.terminate(true);
+
+		await pool.allSettled([
+			[300],
+			[1000],
+			[1500],
+			[600],
+		]);
+
+		assertEquals(pool.length, 4);
+
+		pool.terminate(true);
 	});
 
 	it('should execute dynamic imports in Deno and Node', async () => {
@@ -71,5 +118,11 @@ describe('NiceThreadPool', () => {
 		}
 
 		pool.terminate(true);
+	});
+
+	it('should be an object of NiceThreadPool', () => {
+		const thread = new NiceThreadPool(async () => {});
+
+		assertEquals(Object.prototype.toString.call(thread), '[object NiceThreadPool]');
 	});
 });

@@ -1,94 +1,71 @@
-// deno-lint-ignore-file no-explicit-any
 import { isNiceThreadError } from './error.ts';
+import type { AwaitResult, NiceAsync } from './types.ts';
 import { makeUrl } from './url.ts';
 
-export class NiceThread<T = unknown, I = any> {
-	#persist = false;
+/** A promise-based web worker wrapper for easy thread creation at runtime. */
+export class NiceThread<T extends NiceAsync> {
+	#idCounter = 0;
 	#worker: Worker;
-	#promise: Promise<T>;
 
-	constructor(
-		executor: (
-			this: { workerData: I },
-			resolve: (value: T | PromiseLike<T>) => void,
-			reject: (reason?: any) => void,
-		) => void,
-	) {
-		const script = 'const executor = ' + executor.toString() + '\n' +
-			'addEventListener("message", function (event) {\n' +
-			'  const workerData = event.data\n' +
-			'  new Promise(executor.bind({ workerData }))\n' +
-			'    .then(\n' +
-			'      function (result) {\n' +
-			'        postMessage(result)\n' +
-			'      },\n' +
-			'      function (error) {\n' +
-			'        postMessage({ __nice_thread_error: error })\n' +
-			'      }\n' +
-			'    )\n' +
+	/** Creates an instance of NiceThread with an async function for threaded work. */
+	constructor(worker: T) {
+		const script = 'const workerCache = new Map();\n' +
+			'const worker = ' + worker.toString() + ';\n' +
+			'addEventListener("message", async function (event) {\n' +
+			'  const workerData = event.data ?? { id: 0, args: [] };\n' +
+			'  const { id = 0, args = [] } = workerData\n' +
+			'  try{\n' +
+			'    const result = await worker(...args);\n' +
+			'    postMessage({ id, result });\n' +
+			'  } catch (error) {\n' +
+			'    postMessage({ id, __nice_thread_error: error })\n' +
+			'  }\n' +
 			'})';
-		const url = makeUrl(script);
-		this.#worker = new Worker(url, { type: 'module' });
-		this.#promise = this.#newPromise();
+		// deno-lint-ignore no-explicit-any
+		this.#worker = new Worker(makeUrl(script), { type: 'module' } as any);
 	}
 
-	#newPromise() {
-		return new Promise<T>((resolve, reject) => {
-			this.#worker.onmessage = (event: MessageEvent) => {
-				this.#terminate();
-				if (isNiceThreadError(event.data)) {
-					reject(event.data.__nice_thread_error);
-				} else {
-					resolve(event.data);
-				}
-			};
-			this.#worker.onerror = (event: ErrorEvent) => {
-				this.#terminate();
+	/** Calls the function on the thread and returns a promise which will contain the result. */
+	call(...args: Parameters<T>): Promise<AwaitResult<T>> {
+		const id = this.#idCounter++;
+		const promise = new Promise<AwaitResult<T>>((resolve, reject) => {
+			const onerror = (event: ErrorEvent) => {
+				remove();
 				reject(event.error);
 			};
-			this.#worker.onmessageerror = (event: MessageEvent) => {
-				this.#terminate();
+			const onmessage = (event: MessageEvent) => {
+				if (event.data?.id === id) {
+					remove();
+					if (isNiceThreadError(event.data)) {
+						reject(event.data.__nice_thread_error);
+					} else {
+						resolve(event.data.result as AwaitResult<T>);
+					}
+				}
+			};
+			const onmessageerror = (event: MessageEvent) => {
+				remove();
 				reject(event.data);
 			};
+			const remove = () => {
+				this.#worker.removeEventListener('error', onerror);
+				this.#worker.removeEventListener('message', onmessage);
+				this.#worker.removeEventListener('messageerror', onmessageerror);
+			};
+
+			this.#worker.addEventListener('error', onerror);
+			this.#worker.addEventListener('message', onmessage);
+			this.#worker.addEventListener('messageerror', onmessageerror);
 		});
+
+		this.#worker.postMessage({ id, args });
+
+		return promise;
 	}
 
-	#terminate() {
-		if (this.#persist) {
-			this.#promise = this.#newPromise();
-		} else {
-			this.#worker.terminate();
-		}
-	}
-
-	get persist() {
-		return this.#persist;
-	}
-
-	set persist(value: boolean) {
-		this.#persist = value;
-	}
-
-	putWork(workerData: I) {
-		this.#worker.postMessage(workerData);
-		return this;
-	}
-
-	then<TResult1 = T, TResult2 = never>(
-		onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
-		onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null,
-	): Promise<TResult1 | TResult2> {
-		return this.#promise.then(onfulfilled, onrejected);
-	}
-
-	catch<TResult = never>(
-		onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null,
-	): Promise<T | TResult> {
-		return this.#promise.catch(onrejected);
-	}
-
-	finally(onfinally?: (() => void) | null | undefined): Promise<T> {
-		return this.#promise.finally(onfinally);
+	/** Terminates the thread and any pending work. */
+	terminate() {
+		this.#worker.terminate();
 	}
 
 	get [Symbol.toStringTag](): string {
