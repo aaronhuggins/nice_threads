@@ -32,14 +32,15 @@ pool.poolSize = 6;
 const results = await pool.all(Array.from({ length: 20 }, () => 2048));
 ```
 
-For complete details of the library, please see the hosted documentation (coming soon).
+For complete details of the library, please see [the hosted documentation](https://deno.land/x/nice_threads/mod.ts).
+In-line code examples will be added before a major version release.
 
 ## Fixes old lib Promise Workers
 
 This code base is a refactor of [the promise-workers library](https://github.com/aaronhuggins/promise-workers). Nice
 Threads has a better name, and works in Node and Deno.
 
-Some features of Promise Workers are not working yet, and some features will be deprecated. A list of feature parity and
-reasoning will be forthcoming. The main driver is that Promise Workers was written with a lot of assumptions regarding
-Node 12 that no longer apply, and had major compatibility issues with Workers in Web and Deno. It was easier to get a
-clean break than to treat it as a new version of Promise Workers.
+Most features of Promise Workers will be deprecated. A list of feature parity and reasoning will be forthcoming. The
+main driver is that Promise Workers was written with a lot of assumptions regarding Node 12 that no longer apply,
+and had major compatibility issues with Workers in Web and Deno. It was easier to get a clean break than to treat it
+as a new version of Promise Workers.
