@@ -52,27 +52,27 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<AwaitResu
 	}
 
 	/** Resolve all calls on the thread pool. */
-	all(): Promise<Awaited<ReturnType<T>>[]>;
+	all(): Promise<AwaitResult<T>[]>;
 	/** Resolve an array of calls on the thread pool. */
-	all(calls: Parameters<T>[]): Promise<Awaited<ReturnType<T>>[]>;
-	all(calls?: Parameters<T>[]): Promise<Awaited<ReturnType<T>>[]> {
+	all(calls: Parameters<T>[]): Promise<AwaitResult<T>[]>;
+	all(calls?: Parameters<T>[]): Promise<AwaitResult<T>[]> {
 		if (Array.isArray(calls)) return Promise.all(calls.map((args) => this.call(...args)));
 
 		return Promise.all(this) as any;
 	}
 
 	/** Settle all calls on the thread pool. */
-	allSettled(): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]>;
+	allSettled(): Promise<PromiseSettledResult<AwaitResult<T>>[]>;
 	/** Settle an array of calls on the thread pool. */
-	allSettled(calls: Parameters<T>[]): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]>;
-	allSettled(calls?: Parameters<T>[]): Promise<PromiseSettledResult<Awaited<ReturnType<T>>>[]> {
+	allSettled(calls: Parameters<T>[]): Promise<PromiseSettledResult<AwaitResult<T>>[]>;
+	allSettled(calls?: Parameters<T>[]): Promise<PromiseSettledResult<AwaitResult<T>>[]> {
 		if (Array.isArray(calls)) return Promise.allSettled(calls.map((args) => this.call(...args)));
 
 		return Promise.allSettled(this) as any;
 	}
 
 	/** Clear all results from the thread pool. */
-	clear() {
+	clear(): void {
 		this.length = 0;
 	}
 
