@@ -11,18 +11,15 @@ export class NiceThread<T extends NiceAsync> {
 	constructor(worker: T) {
 		const script = 'const workerCache = new Map();\n' +
 			'const worker = ' + worker.toString() + ';\n' +
-			'addEventListener("message", function (event) {\n' +
+			'addEventListener("message", async function (event) {\n' +
 			'  const workerData = event.data ?? { id: 0, args: [] };\n' +
 			'  const { id = 0, args = [] } = workerData\n' +
-			'  worker(...args)\n' +
-			'    .then(\n' +
-			'      function (result) {\n' +
-			'        postMessage({ id, result })\n' +
-			'      },\n' +
-			'      function (error) {\n' +
-			'        postMessage({ id, __nice_thread_error: error })\n' +
-			'      }\n' +
-			'    )\n' +
+			'  try{\n' +
+			'    const result = await worker(...args);\n' +
+			'    postMessage({ id, result });\n' +
+			'  } catch (error) {\n' +
+			'    postMessage({ id, __nice_thread_error: error })\n' +
+			'  }\n' +
 			'})';
 		// deno-lint-ignore no-explicit-any
 		this.#worker = new Worker(makeUrl(script), { type: 'module' } as any);
