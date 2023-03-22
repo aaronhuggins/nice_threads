@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { isNiceThreadError } from './error.ts';
-import type { NiceAsync } from "./types.ts";
+import type { NiceAsync } from './types.ts';
 import { makeUrl } from './url.ts';
 
 export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<ReturnType<T>>>> {
