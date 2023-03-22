@@ -1,4 +1,5 @@
 import { isNiceThreadError } from './error.ts';
+import { getGlobalWorker } from './global_worker.ts';
 import type { AwaitResult, NiceAsync } from './types.ts';
 import { makeUrl } from './url.ts';
 
@@ -21,6 +22,7 @@ export class NiceThread<T extends NiceAsync> {
 			'    postMessage({ id, __nice_thread_error: error })\n' +
 			'  }\n' +
 			'})';
+		const Worker = getGlobalWorker();
 		// deno-lint-ignore no-explicit-any
 		this.#worker = new Worker(makeUrl(script), { type: 'module' } as any);
 	}
