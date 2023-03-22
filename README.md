@@ -11,16 +11,12 @@ All executors and workers are of type `module`; use `await import` to dynamicall
 Then, you can start individual threads and manage them yourself:
 
 ```TypeScript
-const niceThread = new NiceThread<string, number>(function (resolve, reject) {
+const niceThread = new NiceThread(async function (input) {
 	// Example only. Typically, you want some big work to do off the main thread.
-	try {
-		resolve(this.workerData.toString());
-	} catch (error) {
-		reject(error);
-	}
+	return input
 });
 
-const result = await niceThread.putWork(10); // Expected: '10'
+const result = await niceThread.call(10); // Expected: '10'
 ```
 
 Or use the provided round-robin thread pool:
