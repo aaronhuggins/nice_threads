@@ -2,11 +2,16 @@
 import { isNiceThreadError } from '../error.ts';
 import { makeUrl } from '../url.ts';
 
+/**
+ * Legacy web worker wrapper class; poor API, bad re-implementation of Promise.
+ * @deprecated Will be removed in a major release; no longer maintained.
+ */
 export class NiceThread<T = unknown, I = any> {
 	#persist = false;
 	#worker: Worker;
 	#promise: Promise<T>;
 
+	/** @deprecated Will be removed in a major release; no longer maintained. */
 	constructor(
 		executor: (
 			this: { workerData: I },
