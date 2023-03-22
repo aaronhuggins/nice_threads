@@ -119,4 +119,10 @@ describe('NiceThreadPool', () => {
 
 		pool.terminate(true);
 	});
+
+	it('should be an object of NiceThreadPool', () => {
+		const thread = new NiceThreadPool(async () => {});
+
+		assertEquals(Object.prototype.toString.call(thread), '[object NiceThreadPool]');
+	});
 });

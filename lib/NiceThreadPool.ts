@@ -86,4 +86,8 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<AwaitResu
 		this.#last = 0;
 		if (clear) this.clear();
 	}
+
+	get [Symbol.toStringTag](): string {
+		return 'NiceThreadPool';
+	}
 }
