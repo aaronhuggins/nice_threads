@@ -1,10 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { isNiceThreadError } from './error.ts';
+import type { NiceAsync } from "./types.ts";
 import { makeUrl } from './url.ts';
-
-declare global {
-	const workerCache: Map<any, any>
-}
 
 export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<ReturnType<T>>>> {
 	#last = 0;
@@ -136,5 +133,3 @@ export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<Awaited<R
 		if (clear) this.clear();
 	}
 }
-
-export type NiceAsync<Params extends any[] = any[], Result = any> = (...args: Params) => Promise<Result>;
