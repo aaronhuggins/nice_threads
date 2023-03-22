@@ -1,9 +1,11 @@
-let globalWorker: typeof Worker = Worker;
+import { NiceWorker } from './NiceWorker.ts';
 
-export function getGlobalWorker(): typeof Worker {
+let globalWorker: typeof NiceWorker = NiceWorker;
+
+export function getGlobalWorker(): typeof NiceWorker {
 	return globalWorker;
 }
 
-export function setGlobalWorker(workerImpl: typeof Worker): void {
+export function setGlobalWorker(workerImpl: typeof NiceWorker): void {
 	globalWorker = workerImpl;
 }

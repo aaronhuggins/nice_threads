@@ -1,30 +1,17 @@
 import { isNiceThreadError } from './error.ts';
 import { getGlobalWorker } from './global_worker.ts';
+import type { NiceWorker } from './NiceWorker.ts';
 import type { AwaitResult, NiceAsync } from './types.ts';
-import { makeUrl } from './url.ts';
 
 /** A promise-based web worker wrapper for easy thread creation at runtime. */
 export class NiceThread<T extends NiceAsync> {
 	#idCounter = 0;
-	#worker: Worker;
+	#worker: NiceWorker;
 
 	/** Creates an instance of NiceThread with an async function for threaded work. */
 	constructor(worker: T) {
-		const script = 'const workerCache = new Map();\n' +
-			'const worker = ' + worker.toString() + ';\n' +
-			'addEventListener("message", async function (event) {\n' +
-			'  const workerData = event.data ?? { id: 0, args: [] };\n' +
-			'  const { id = 0, args = [] } = workerData\n' +
-			'  try{\n' +
-			'    const result = await worker(...args);\n' +
-			'    postMessage({ id, result });\n' +
-			'  } catch (error) {\n' +
-			'    postMessage({ id, __nice_thread_error: error })\n' +
-			'  }\n' +
-			'})';
 		const Worker = getGlobalWorker();
-		// deno-lint-ignore no-explicit-any
-		this.#worker = new Worker(makeUrl(script), { type: 'module' } as any);
+		this.#worker = new Worker(worker);
 	}
 
 	/** Calls the function on the thread and returns a promise which will contain the result. */
