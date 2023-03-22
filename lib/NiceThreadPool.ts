@@ -2,12 +2,14 @@
 import { NiceThread } from './NiceThread.ts';
 import type { AwaitResult, NiceAsync } from './types.ts';
 
+/** A promise-based thread pool for easy management of threads. */
 export class NiceThreadPool<T extends NiceAsync> extends Array<Promise<AwaitResult<T>>> {
 	#last = 0;
 	#poolSize = 2;
 	#pool: NiceThread<T>[] = [];
 	#worker: T;
 
+	/** Creates an instance of thread pool with an async worker function. */
 	constructor(worker: T) {
 		super();
 		this.#worker = worker;
