@@ -38,7 +38,7 @@ export class MockWorker implements NiceWorker {
 			const promise = new Promise<void>((resolve) => {
 				const { id = 0, args = [] } = workerData ?? { id: 0, args: [] };
 				try {
-					this.#worker(...args).then((result) => {
+					Promise.resolve(this.#worker(...args)).then((result) => {
 						this.#emit('message', { id, result });
 						this.#promises.delete(promise);
 						resolve();
@@ -48,9 +48,15 @@ export class MockWorker implements NiceWorker {
 						resolve();
 					});
 				} catch (error) {
-					this.#emit('message', { id, __nice_thread_error: error });
-					this.#promises.delete(promise);
-					resolve();
+					// If a synchronous function is passed and errors, a race condition occurs.
+					// Pretend to be asynchronous by scheduling resolution forthe future.
+					setTimeout(() => {
+						this.#emit('message', { id, __nice_thread_error: error });
+						if (typeof promise !== 'undefined') {
+							this.#promises.delete(promise);
+						}
+						resolve();
+					}, 0);
 				}
 			});
 			this.#promises.add(promise);
