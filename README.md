@@ -6,7 +6,7 @@ A promise wrapper for JavaScript Workers, batteries included for Deno and Node.
 
 Import using Deno, Node CJS `require`, or Node ESM `import`.
 
-All executors and workers are of type `module`; use `await import` to dynamically import other modules at runtime.
+All executors and workers are of type `module`; use `await import` to dynamically import other modules at runtime. Using `require` will result in transpiling those statements to `await import`, so ensure that Node modules you want to use also provide ESM exports. This is also how TypeScript support "just works" when targeting `CommonJS` module syntax.
 
 Then, you can start individual threads and manage them yourself:
 
@@ -30,6 +30,25 @@ const pool = new NiceThreadPool(async (size: number): string => {
 pool.poolSize = 6;
 
 const results = await pool.all(Array.from({ length: 20 }, () => 2048));
+```
+
+Accurate debugging and testing is now supported with a module-wide API.
+
+```TypeScript
+// Example only.
+import { mock, unmock } from 'https://deno.land/x/nice_threads/mod.ts' // or `from 'nice-threads'`
+
+describe('My Test', () => {
+	it('should give me real code coverage', async () => {
+		mock()
+		const niceThread = new NiceThread(async function (input) {
+			return input
+		});
+
+		const result = await niceThread.call(10); // Expected: '10'
+		unmock()
+	})
+})
 ```
 
 For complete details of the library, please see [the hosted documentation](https://deno.land/x/nice_threads/mod.ts).
