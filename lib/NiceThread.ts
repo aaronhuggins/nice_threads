@@ -18,10 +18,6 @@ export class NiceThread<T extends NiceAsync> {
 	call(...args: Parameters<T>): Promise<AwaitResult<T>> {
 		const id = this.#idCounter++;
 		const promise = new Promise<AwaitResult<T>>((resolve, reject) => {
-			const onerror = (event: ErrorEvent) => {
-				remove();
-				reject(event.error);
-			};
 			const onmessage = (event: MessageEvent) => {
 				if (event.data?.id === id) {
 					remove();
@@ -37,12 +33,10 @@ export class NiceThread<T extends NiceAsync> {
 				reject(event.data);
 			};
 			const remove = () => {
-				this.#worker.removeEventListener('error', onerror);
 				this.#worker.removeEventListener('message', onmessage);
 				this.#worker.removeEventListener('messageerror', onmessageerror);
 			};
 
-			this.#worker.addEventListener('error', onerror);
 			this.#worker.addEventListener('message', onmessage);
 			this.#worker.addEventListener('messageerror', onmessageerror);
 		});
