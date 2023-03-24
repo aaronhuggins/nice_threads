@@ -1,3 +1,4 @@
+import { getGlobalWorker, setGlobalWorker } from './global_worker.ts';
 import type { NiceWorker } from './NiceWorker.ts';
 import type { NiceAsync } from './types.ts';
 
@@ -105,15 +106,23 @@ export class MockWorker implements NiceWorker {
 
 	terminate(): void {}
 
-	/** Set a global `workerCache` Map; use if your method acceses the `workerCache runtime varialbe. */
-	static setWorkerCache() {
-		// deno-lint-ignore no-explicit-any
-		(globalThis as any).workerCache = new Map<any, any>();
+	private static workerClass?: typeof NiceWorker;
+
+	static mock() {
+		if (!MockWorker.workerClass) {
+			// deno-lint-ignore no-explicit-any
+			(globalThis as any).workerCache = new Map<any, any>();
+			MockWorker.workerClass = getGlobalWorker();
+			setGlobalWorker(MockWorker);
+		}
 	}
 
-	/** Remove a global `workerCache` Map; use if your method acceses the `workerCache runtime varialbe. */
-	static unsetWorkerCache() {
-		// deno-lint-ignore no-explicit-any
-		delete (globalThis as any).workerCache;
+	static unmock() {
+		if (MockWorker.workerClass) {
+			setGlobalWorker(MockWorker.workerClass);
+			MockWorker.workerClass = undefined;
+			// deno-lint-ignore no-explicit-any
+			delete (globalThis as any).workerCache;
+		}
 	}
 }
