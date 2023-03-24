@@ -56,7 +56,9 @@ describe('MockWorker', () => {
 		// this could really happen in consumers of the library.
 		const worker = (input: 'pass' | 'error'): Promise<'pass'> => {
 			if (input === 'error') {
-				throw new Error(input);
+				const error = workerCache.get(input) ?? new Error(input);
+				workerCache.set(input, error);
+				throw error;
 			}
 
 			return input as unknown as Promise<'pass'>;
@@ -66,6 +68,7 @@ describe('MockWorker', () => {
 		const thread = new NiceThread(worker);
 		const expected1 = await thread.call('pass');
 		const expected2 = await thread.call('error').catch((error) => error?.message as 'error');
+		const expected3 = await thread.call('error').catch((error) => error?.message as 'error');
 
 		thread.terminate();
 
@@ -73,6 +76,7 @@ describe('MockWorker', () => {
 		const mocked = new NiceThread(worker);
 		const actual1 = await mocked.call('pass');
 		const actual2 = await mocked.call('error').catch((error) => error?.message as 'error');
+		const actual3 = await mocked.call('error').catch((error) => error?.message as 'error');
 
 		mocked.terminate();
 		unmock();
@@ -80,5 +84,6 @@ describe('MockWorker', () => {
 
 		assertEquals(actual1, expected1);
 		assertEquals(actual2, expected2);
+		assertEquals(actual3, expected3);
 	});
 });
