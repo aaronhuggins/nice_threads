@@ -105,24 +105,24 @@ export class MockWorker implements NiceWorker {
 	}
 
 	terminate(): void {}
+}
 
-	private static workerClass?: typeof NiceWorker;
+let workerClass: typeof NiceWorker | undefined;
 
-	static mock() {
-		if (!MockWorker.workerClass) {
-			// deno-lint-ignore no-explicit-any
-			(globalThis as any).workerCache = new Map<any, any>();
-			MockWorker.workerClass = getGlobalWorker();
-			setGlobalWorker(MockWorker);
-		}
+export function mock() {
+	if (!workerClass) {
+		// deno-lint-ignore no-explicit-any
+		(globalThis as any).workerCache = new Map<any, any>();
+		workerClass = getGlobalWorker();
+		setGlobalWorker(MockWorker);
 	}
+}
 
-	static unmock() {
-		if (MockWorker.workerClass) {
-			setGlobalWorker(MockWorker.workerClass);
-			MockWorker.workerClass = undefined;
-			// deno-lint-ignore no-explicit-any
-			delete (globalThis as any).workerCache;
-		}
+export function unmock() {
+	if (workerClass) {
+		setGlobalWorker(workerClass);
+		workerClass = undefined;
+		// deno-lint-ignore no-explicit-any
+		delete (globalThis as any).workerCache;
 	}
 }
