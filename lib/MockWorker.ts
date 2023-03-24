@@ -115,6 +115,7 @@ export class MockWorker implements NiceWorker {
 
 let workerClass: typeof NiceWorker | undefined;
 
+/** Enable mock workers for single-threaded testing and validation. Use mocking for accurate debug traces and code coverage. */
 export function mock() {
 	if (!workerClass) {
 		// deno-lint-ignore no-explicit-any
@@ -124,6 +125,7 @@ export function mock() {
 	}
 }
 
+/** Disable mock workers for real multi-threaded validation. Running unmocked code is a reliable integration test. */
 export function unmock() {
 	if (workerClass) {
 		setGlobalWorker(workerClass);
