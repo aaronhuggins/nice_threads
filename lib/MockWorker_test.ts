@@ -1,27 +1,14 @@
 import { assertEquals } from 'https://deno.land/std@0.150.0/testing/asserts.ts';
 import { describe, it } from 'https://deno.land/x/deno_mocha@0.3.0/mod.ts';
-import { mock, MockWorker, unmock } from './MockWorker.ts';
-import { getGlobalWorker } from './global_worker.ts';
-import { NiceWorker } from './NiceWorker.ts';
+import { mock, unmock } from './mock.ts';
 import { NiceThread } from './NiceThread.ts';
 
 function assertNotMocked(): void {
 	// deno-lint-ignore no-explicit-any
 	assertEquals((globalThis as any).workerCache, undefined);
-	assertEquals(getGlobalWorker(), NiceWorker);
 }
 
 describe('MockWorker', () => {
-	it('should mock and unmock', () => {
-		assertNotMocked();
-		mock();
-		// deno-lint-ignore no-explicit-any
-		assertEquals((globalThis as any).workerCache instanceof Map, true);
-		assertEquals(getGlobalWorker(), MockWorker);
-		unmock();
-		assertNotMocked();
-	});
-
 	it('should simulate NiceWorker', async () => {
 		const worker = async (input: 'pass' | 'error') => {
 			if (input === 'error') {
