@@ -1,6 +1,8 @@
 import { describe, it } from 'https://deno.land/x/deno_mocha@0.3.0/mod.ts';
-import { assert, assertEquals } from 'https://deno.land/std@0.150.0/testing/asserts.ts';
+import { assert, assertEquals, assertThrows } from 'https://deno.land/std@0.150.0/testing/asserts.ts';
 import { NiceThread } from './NiceThread.ts';
+import { NiceWorker } from './NiceWorker.ts';
+import { MockWorker } from './MockWorker.ts';
 
 describe('NiceThread', () => {
 	it('should handle work with no errors', async () => {
@@ -45,10 +47,12 @@ describe('NiceThread', () => {
 		const promise2 = thread.call(1000).catch((err) => err);
 		const promise3 = thread.call(1500).catch((err) => err);
 		const promise4 = thread.call(600).catch((err) => err);
+		const promise5 = thread.call(function a() {} as unknown as number).catch((err) => err);
 		const result1 = await promise1;
 		const result2 = await promise2;
 		const result3 = await promise3;
 		const result4 = await promise4;
+		const result5 = await promise5;
 
 		thread.terminate();
 
@@ -60,6 +64,8 @@ describe('NiceThread', () => {
 		assertEquals(result3.message, '1500');
 		assert(result4 instanceof Error);
 		assertEquals(result4.message, '600');
+		assert(result5 instanceof Error);
+		assertEquals(result5.message, 'function a() {} could not be cloned.');
 	});
 
 	it('should be an object of NiceThread', () => {
@@ -67,5 +73,15 @@ describe('NiceThread', () => {
 		thread.terminate();
 
 		assertEquals(Object.prototype.toString.call(thread), '[object NiceThread]');
+	});
+
+	it('should set the worker class or error', () => {
+		NiceThread.setWorkerClass(NiceWorker);
+		NiceThread.setWorkerClass(MockWorker);
+
+		assertThrows(() => {
+			// deno-lint-ignore no-explicit-any
+			NiceThread.setWorkerClass({} as any);
+		});
 	});
 });

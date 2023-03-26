@@ -1,7 +1,9 @@
 import { isNiceThreadError } from './error.ts';
-import { getGlobalWorker } from './global_worker.ts';
-import type { NiceWorker } from './NiceWorker.ts';
+import { MockWorker } from './MockWorker.ts';
+import { NiceWorker } from './NiceWorker.ts';
 import type { AwaitResult, NiceAsync } from './types.ts';
+
+let workerClass: typeof NiceWorker = NiceWorker;
 
 /** A promise-based web worker wrapper for easy thread creation at runtime. */
 export class NiceThread<T extends NiceAsync> {
@@ -10,8 +12,7 @@ export class NiceThread<T extends NiceAsync> {
 
 	/** Creates an instance of NiceThread with an async function for threaded work. */
 	constructor(worker: T) {
-		const Worker = getGlobalWorker();
-		this.#worker = new Worker(worker);
+		this.#worker = new workerClass(worker);
 	}
 
 	/** Calls the function on the thread and returns a promise which will contain the result. */
@@ -39,9 +40,13 @@ export class NiceThread<T extends NiceAsync> {
 
 			this.#worker.addEventListener('message', onmessage);
 			this.#worker.addEventListener('messageerror', onmessageerror);
-		});
 
-		this.#worker.postMessage({ id, args });
+			try {
+				this.#worker.postMessage({ id, args });
+			} catch (error) {
+				reject(error);
+			}
+		});
 
 		return promise;
 	}
@@ -53,5 +58,13 @@ export class NiceThread<T extends NiceAsync> {
 
 	get [Symbol.toStringTag](): string {
 		return 'NiceThread';
+	}
+
+	static setWorkerClass(workerImpl: typeof NiceWorker | typeof MockWorker): void {
+		if (workerImpl === NiceWorker || workerImpl === MockWorker) {
+			workerClass = workerImpl;
+			return;
+		}
+		throw new TypeError('Function setWorkerClass: type of input is not NiceWorker or MockWorker.');
 	}
 }

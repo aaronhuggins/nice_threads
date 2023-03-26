@@ -1,4 +1,3 @@
-import { getGlobalWorker, setGlobalWorker } from './global_worker.ts';
 import type { NiceWorker } from './NiceWorker.ts';
 import type { NiceAsync } from './types.ts';
 
@@ -35,8 +34,8 @@ export class MockWorker implements NiceWorker {
 	postMessage(message: any): void {
 		try {
 			const workerData = structuredClone?.(message) ?? message;
+			const { id = 0, args = [] } = workerData ?? {};
 			const promise = new Promise<void>((resolve) => {
-				const { id = 0, args = [] } = workerData ?? { id: 0, args: [] };
 				try {
 					Promise.resolve(this.#worker(...args)).then((result) => {
 						this.#emit('message', { id, result });
@@ -111,26 +110,4 @@ export class MockWorker implements NiceWorker {
 	}
 
 	terminate(): void {}
-}
-
-let workerClass: typeof NiceWorker | undefined;
-
-/** Enable mock workers for single-threaded testing and validation. Use mocking for accurate debug traces and code coverage. */
-export function mock() {
-	if (!workerClass) {
-		// deno-lint-ignore no-explicit-any
-		(globalThis as any).workerCache = new Map<any, any>();
-		workerClass = getGlobalWorker();
-		setGlobalWorker(MockWorker);
-	}
-}
-
-/** Disable mock workers for real multi-threaded validation. Running unmocked code is a reliable integration test. */
-export function unmock() {
-	if (workerClass) {
-		setGlobalWorker(workerClass);
-		workerClass = undefined;
-		// deno-lint-ignore no-explicit-any
-		delete (globalThis as any).workerCache;
-	}
 }
