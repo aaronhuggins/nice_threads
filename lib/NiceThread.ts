@@ -40,9 +40,13 @@ export class NiceThread<T extends NiceAsync> {
 
 			this.#worker.addEventListener('message', onmessage);
 			this.#worker.addEventListener('messageerror', onmessageerror);
-		});
 
-		this.#worker.postMessage({ id, args });
+			try {
+				this.#worker.postMessage({ id, args });
+			} catch (error) {
+				reject(error);
+			}
+		});
 
 		return promise;
 	}

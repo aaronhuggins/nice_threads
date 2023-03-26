@@ -34,8 +34,8 @@ export class MockWorker implements NiceWorker {
 	postMessage(message: any): void {
 		try {
 			const workerData = structuredClone?.(message) ?? message;
+			const { id = 0, args = [] } = workerData ?? {};
 			const promise = new Promise<void>((resolve) => {
-				const { id = 0, args = [] } = workerData ?? { id: 0, args: [] };
 				try {
 					Promise.resolve(this.#worker(...args)).then((result) => {
 						this.#emit('message', { id, result });
